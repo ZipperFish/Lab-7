@@ -1,0 +1,254 @@
+---
+title: "Lab 7: Rectangling and Webscraping"
+author: "Nana Frimpong"
+format: html
+editor: source
+
+---
+
+# Overview
+
+This is a two part assignment. In the first part of the assignment you will practice rectangling on a dataset from the `repurrrsive` package. In the second part you will combine the `rvest` package along with functions and iteration to scrape data on foreign linked political action committees from the website [open secrets](https://www.opensecrets.org).
+
+# Rectangling
+```{r-2}
+install.packages("repurrrsive")
+install.packages("jsonlite")
+```
+```{r-4}
+install.packages("robotstxt")
+install.packages("rvest")
+```
+```{r-5}
+install.packages("xml2")
+```
+
+```{r}
+library(tidyverse)
+library(repurrrsive)
+library(jsonlite)
+library(glue)
+```
+```{r}
+library(robotstxt)
+library(rvest)
+library(xml2)
+library(dplyr)
+library(stringr)
+
+```
+
+**Problem 1:** Load the `repurrrsive` package to get access to get access to the `got_chars` dataset. In section 23.4.2 of R4DS, there is code that extracts data from the `got_chars` list and converts it into a tibble with information on each character and a separate tibble which contains information on the titles held by each character. Perform similar operations to create separate tibbles containing the aliases, allegiances, books, and TV series of each Game of Thrones character.
+```{r}
+chars <- tibble(json = got_chars)
+```
+```{r}
+chars |> 
+  unnest_wider(json)
+```
+
+```{r}
+characters <- chars |> 
+  unnest_wider(json) |> 
+  select(id, aliases , allegiances, books, tvSeries)
+characters
+```
+
+```{r}
+aliases <- chars |> 
+  unnest_wider(json) |> 
+  select(id, aliases) |> 
+  unnest_longer(aliases) |> 
+  filter(aliases != "") |> 
+  rename(alias = aliases)
+
+allegiances <- chars |> 
+  unnest_wider(json) |> 
+  select(id, allegiances) |> 
+  unnest_longer(allegiances) |> 
+  filter(allegiances != "") |> 
+  rename(allegiance = allegiances)
+
+
+books <- chars |> 
+  unnest_wider(json) |> 
+  select(id, books) |> 
+  unnest_longer(books) |> 
+  filter(books != "") |> 
+  rename(book = books)
+
+
+tv_series <- chars |> 
+  unnest_wider(json) |> 
+  select(id, tvSeries) |> 
+  unnest_longer(tvSeries) |> 
+  filter(tvSeries != "") |> 
+  rename(tv_show = tvSeries)
+tv_series
+```
+
+# Webscraping Open Secrets
+
+In this assignment we will scrape and work with data foreign connected PACs that donate to US political campaigns. In the United States, only American citizens and green card holders can contribute to federal elections, but the American divisions of foreign companies can form political action committees (PACs) and collect contributions from their American employees.
+
+First, we will get data foreign connected PAC contributions in the 2022 election cycle. Then, you will use a similar approach to get data such contributions from previous years so that we can examine trends over time.
+
+In order to complete this assignment you will need a Chrome browser with the [Selector Gadget extension](http://selectorgadget.com/) installed.
+
+In addition to `tidyverse`, you will need to install and load the packages `robotstxt` and `rvest`
+
+
+
+
+**Problem 2:**
+
+-   Check that open secrets allows you to webscrape by running the `paths_allowed` function on the url `https://www.opensecrets.org`.
+```{r}
+open_stuff_reference = "https://www.opensecrets.org"
+```
+```{r}
+paths_allowed(open_stuff_reference)
+```
+
+-   Write a function called `scrape_pac()` that scrapes information from the Open Secrets webpage for foreign connected PAC contributions in a given year. The `url` for this data is <https://www.opensecrets.org/political-action-committees-pacs/foreign-connected-pacs/2024>. This function should take the url of the webpage as its only input and should output a data frame. The variables of this data-frame should be renamed so that they are in `snake_case` format (`lower_case_and_underscores_for_spaces`, see R4DS section 2.3). Use `str_squish()` to remove excess whitespace from the Country of Origin/Parent Company variables, and add a new column which records the year by extracting from the input url.
+
+Hint: If you have trouble finding the right elements to search for using the selector gadget try looking for a table element.
+
+
+```{r}
+scrape_pac  =  function(url) {
+  message("I found the url: ", url)
+  page <- read_html(url)
+  
+  table_stuff =  page %>% html_element("table")
+  if (is.null(table_stuff)) {
+    warning("bruh cudnt get table.")
+    return(NULL)
+  }
+  
+  pac_table <- table_stuff %>%
+    html_table() %>%
+    rename_with(~ str_replace_all(., " ", "_") %>% str_to_lower(), everything()) %>%
+    mutate(
+      country_of_origin_parent_company = str_squish(`country_of_origin/parent_company`),
+      year = str_extract(url, "\\d{4}") # look thru slides string power point
+    )
+  
+  return(pac_table)
+}
+```
+
+-   Test your function on the urls for 2024, 2022, and 2000, and show the first several rows of each of the outpus. Does the function seem to do what you expected it to do?
+
+
+```{r}
+urls =  c(
+  "https://www.opensecrets.org/political-action-committees-pacs/foreign-connected-pacs/2024",
+  "https://www.opensecrets.org/political-action-committees-pacs/foreign-connected-pacs/2022",
+  "https://www.opensecrets.org/political-action-committees-pacs/foreign-connected-pacs/2000"
+)
+
+pac_years  =  lapply(urls, scrape_pac)
+
+
+lapply(pac_years, head)
+
+```
+
+
+**Problem 3:**
+
+-   Construct a vector called `urls` that contains the URLs for each webpage that contains information on foreign-connected PAC contributions for a given year (combine `seq` and string functions). Using the `map_dfr` function from the `purrr` package, apply the `scrape_pac()` function over `urls` in a way that will result in a data frame called `pac_all` that contains the data for all of the years.
+```{r}
+years =  seq(2000, 2024, by = 2)
+urls =  glue("https://www.opensecrets.org/political-action-committees-pacs/foreign-connected-pacs/{years}")
+pac_all = map_dfr(urls, scrape_pac)
+view(pac_all)
+```
+
+
+-   Clean this combined dataset by separating the country of origin from the parent company (use `separate_wider_delim` or another tool of your choice, you will need to be cautious with some special cases in this column) and by converting the strings in the `total`, `dems`, and `repubs` columns into numbers. Print out the top 10 rows over your dataset after completing these steps.
+```{r}
+cleaned_pac_all  =  pac_all %>%
+  separate_wider_delim(
+    country_of_origin_parent_company, 
+    delim = "/", 
+    names = c("country_of_origin", "parent_company"), 
+    too_many = "merge"  
+  ) %>%
+  mutate(
+    total = parse_number(total),
+    dems = parse_number(dems),
+    repubs = parse_number(repubs)
+  )
+head(cleaned_pac_all, 10)
+```
+
+
+
+
+-   Calculate the total contributions from PACs linked to Canada and Mexico each year and plot how these contributions change over time.
+```{r}
+
+can_mex_data <- cleaned_pac_all %>%
+  filter(country_of_origin %in% c("Canada", "Mexico")) %>%
+  group_by(year, country_of_origin) %>%
+  summarize(total_contributions = sum(total, na.rm = TRUE), .groups = "drop")
+```
+
+```{r}
+ggplot(can_mex_data, aes(x = year, y = total_contributions, color = country_of_origin)) +
+  geom_line(size = 1) + geom_point(size = 2) +
+  labs(
+    title = "PAC Contributions Linked to Canada and Mexico Over Time",
+    x = "Year",
+    y = "Total Contributions (USD)",
+    color = "Country of Origin"
+  ) +
+  theme_light() +
+  scale_y_continuous(labels = scales::dollar_format())
+```
+
+
+
+-   Find the 5 countries who over the entire time period of the dataset have the greatest total contribution from affiliated PACs. Then calculate the total contribution for each of those countries for each year of the data and make a plot of it to visualize how the contributions have changed over time.
+```{r}
+top_five_countries = cleaned_pac_all %>%
+  group_by(country_of_origin) %>%
+  summarize(total_contributions = sum(total, na.rm = TRUE), .groups = "drop") %>%
+  arrange(desc(total_contributions)) %>%
+  slice_head(n = 5)
+
+```
+```{r}
+top_countries_data  = cleaned_pac_all %>%
+  filter(country_of_origin %in% top_five_countries$country_of_origin)
+```
+
+```{r}
+top_countries_data =  cleaned_pac_all %>%
+  filter(country_of_origin %in% top_five_countries$country_of_origin)
+
+
+top_countries_yearly  =  top_countries_data %>%
+  group_by(year, country_of_origin) %>%
+  summarize(total_contributions = sum(total, na.rm = TRUE), .groups = "drop")
+
+ggplot(top_countries_yearly, aes(x = year, y = total_contributions, color = country_of_origin)) +
+  geom_line(size = 1) +
+  geom_point(size = 2) +
+  labs(
+    title = "Top 5 Countries by PAC Contributions Over Time",
+    x = "Year",
+    y = "Total Contributions (USD)",
+    color = "Country of Origin"
+  ) +
+  theme_minimal() +
+  scale_y_continuous(labels = scales::dollar_format())
+```
+
+
+
+
+
+

@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.5.57">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Nana Frimpong">
+
+<title>Lab 7: Rectangling and Webscraping</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="607HW7_files/libs/clipboard/clipboard.min.js"></script>
+<script src="607HW7_files/libs/quarto-html/quarto.js"></script>
+<script src="607HW7_files/libs/quarto-html/popper.min.js"></script>
+<script src="607HW7_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="607HW7_files/libs/quarto-html/anchor.min.js"></script>
+<link href="607HW7_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="607HW7_files/libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="607HW7_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="607HW7_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="607HW7_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+
+
+</head>
+
+<body class="fullcontent">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Lab 7: Rectangling and Webscraping</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Nana Frimpong </p>
+          </div>
+  </div>
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="overview" class="level1">
+<h1>Overview</h1>
+<p>This is a two part assignment. In the first part of the assignment you will practice rectangling on a dataset from the <code>repurrrsive</code> package. In the second part you will combine the <code>rvest</code> package along with functions and iteration to scrape data on foreign linked political action committees from the website <a href="https://www.opensecrets.org">open secrets</a>.</p>
+</section>
+<section id="rectangling" class="level1">
+<h1>Rectangling</h1>
+<pre class="{r-2}"><code>install.packages("repurrrsive")
+install.packages("jsonlite")</code></pre>
+<pre class="{r-4}"><code>install.packages("robotstxt")
+install.packages("rvest")</code></pre>
+<pre class="{r-5}"><code>install.packages("xml2")</code></pre>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>── Attaching core tidyverse packages ──────────────────────── tidyverse 2.0.0 ──
+✔ dplyr     1.1.4     ✔ readr     2.1.5
+✔ forcats   1.0.0     ✔ stringr   1.5.1
+✔ ggplot2   3.5.1     ✔ tibble    3.2.1
+✔ lubridate 1.9.3     ✔ tidyr     1.3.1
+✔ purrr     1.0.2     
+── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
+✖ dplyr::filter() masks stats::filter()
+✖ dplyr::lag()    masks stats::lag()
+ℹ Use the conflicted package (&lt;http://conflicted.r-lib.org/&gt;) to force all conflicts to become errors</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(repurrrsive)</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(jsonlite)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>
+Attaching package: 'jsonlite'
+
+The following object is masked from 'package:purrr':
+
+    flatten</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(glue)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(robotstxt)</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(rvest)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>
+Attaching package: 'rvest'</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>The following object is masked from 'package:readr':
+
+    guess_encoding</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(xml2)</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(stringr)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p><strong>Problem 1:</strong> Load the <code>repurrrsive</code> package to get access to get access to the <code>got_chars</code> dataset. In section 23.4.2 of R4DS, there is code that extracts data from the <code>got_chars</code> list and converts it into a tibble with information on each character and a separate tibble which contains information on the titles held by each character. Perform similar operations to create separate tibbles containing the aliases, allegiances, books, and TV series of each Game of Thrones character.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>chars <span class="ot">&lt;-</span> <span class="fu">tibble</span>(<span class="at">json =</span> got_chars)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>chars <span class="sc">|&gt;</span> </span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">unnest_wider</span>(json)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 30 × 18
+   url           id name  gender culture born  died  alive titles aliases father
+   &lt;chr&gt;      &lt;int&gt; &lt;chr&gt; &lt;chr&gt;  &lt;chr&gt;   &lt;chr&gt; &lt;chr&gt; &lt;lgl&gt; &lt;list&gt; &lt;list&gt;  &lt;chr&gt; 
+ 1 https://w…  1022 Theo… Male   "Ironb… "In … ""    TRUE  &lt;chr&gt;  &lt;chr&gt;   ""    
+ 2 https://w…  1052 Tyri… Male   ""      "In … ""    TRUE  &lt;chr&gt;  &lt;chr&gt;   ""    
+ 3 https://w…  1074 Vict… Male   "Ironb… "In … ""    TRUE  &lt;chr&gt;  &lt;chr&gt;   ""    
+ 4 https://w…  1109 Will  Male   ""      ""    "In … FALSE &lt;chr&gt;  &lt;chr&gt;   ""    
+ 5 https://w…  1166 Areo… Male   "Norvo… "In … ""    TRUE  &lt;chr&gt;  &lt;chr&gt;   ""    
+ 6 https://w…  1267 Chett Male   ""      "At … "In … FALSE &lt;chr&gt;  &lt;chr&gt;   ""    
+ 7 https://w…  1295 Cres… Male   ""      "In … "In … FALSE &lt;chr&gt;  &lt;chr&gt;   ""    
+ 8 https://w…   130 Aria… Female "Dorni… "In … ""    TRUE  &lt;chr&gt;  &lt;chr&gt;   ""    
+ 9 https://w…  1303 Daen… Female "Valyr… "In … ""    TRUE  &lt;chr&gt;  &lt;chr&gt;   ""    
+10 https://w…  1319 Davo… Male   "Weste… "In … ""    TRUE  &lt;chr&gt;  &lt;chr&gt;   ""    
+# ℹ 20 more rows
+# ℹ 7 more variables: mother &lt;chr&gt;, spouse &lt;chr&gt;, allegiances &lt;list&gt;,
+#   books &lt;list&gt;, povBooks &lt;list&gt;, tvSeries &lt;list&gt;, playedBy &lt;list&gt;</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>characters <span class="ot">&lt;-</span> chars <span class="sc">|&gt;</span> </span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">unnest_wider</span>(json) <span class="sc">|&gt;</span> </span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(id, aliases , allegiances, books, tvSeries)</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>characters</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 30 × 5
+      id aliases    allegiances books     tvSeries 
+   &lt;int&gt; &lt;list&gt;     &lt;list&gt;      &lt;list&gt;    &lt;list&gt;   
+ 1  1022 &lt;chr [4]&gt;  &lt;chr [1]&gt;   &lt;chr [3]&gt; &lt;chr [6]&gt;
+ 2  1052 &lt;chr [11]&gt; &lt;chr [1]&gt;   &lt;chr [2]&gt; &lt;chr [6]&gt;
+ 3  1074 &lt;chr [1]&gt;  &lt;chr [1]&gt;   &lt;chr [3]&gt; &lt;chr [1]&gt;
+ 4  1109 &lt;chr [1]&gt;  &lt;NULL&gt;      &lt;chr [1]&gt; &lt;chr [1]&gt;
+ 5  1166 &lt;chr [1]&gt;  &lt;chr [1]&gt;   &lt;chr [3]&gt; &lt;chr [2]&gt;
+ 6  1267 &lt;chr [1]&gt;  &lt;NULL&gt;      &lt;chr [2]&gt; &lt;chr [1]&gt;
+ 7  1295 &lt;chr [1]&gt;  &lt;NULL&gt;      &lt;chr [2]&gt; &lt;chr [1]&gt;
+ 8   130 &lt;chr [1]&gt;  &lt;chr [1]&gt;   &lt;chr [4]&gt; &lt;chr [1]&gt;
+ 9  1303 &lt;chr [11]&gt; &lt;chr [1]&gt;   &lt;chr [1]&gt; &lt;chr [6]&gt;
+10  1319 &lt;chr [5]&gt;  &lt;chr [2]&gt;   &lt;chr [1]&gt; &lt;chr [5]&gt;
+# ℹ 20 more rows</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>aliases <span class="ot">&lt;-</span> chars <span class="sc">|&gt;</span> </span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">unnest_wider</span>(json) <span class="sc">|&gt;</span> </span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(id, aliases) <span class="sc">|&gt;</span> </span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">unnest_longer</span>(aliases) <span class="sc">|&gt;</span> </span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(aliases <span class="sc">!=</span> <span class="st">""</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">alias =</span> aliases)</span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>allegiances <span class="ot">&lt;-</span> chars <span class="sc">|&gt;</span> </span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">unnest_wider</span>(json) <span class="sc">|&gt;</span> </span>
+<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(id, allegiances) <span class="sc">|&gt;</span> </span>
+<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">unnest_longer</span>(allegiances) <span class="sc">|&gt;</span> </span>
+<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(allegiances <span class="sc">!=</span> <span class="st">""</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb18-13"><a href="#cb18-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">allegiance =</span> allegiances)</span>
+<span id="cb18-14"><a href="#cb18-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-15"><a href="#cb18-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-16"><a href="#cb18-16" aria-hidden="true" tabindex="-1"></a>books <span class="ot">&lt;-</span> chars <span class="sc">|&gt;</span> </span>
+<span id="cb18-17"><a href="#cb18-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">unnest_wider</span>(json) <span class="sc">|&gt;</span> </span>
+<span id="cb18-18"><a href="#cb18-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(id, books) <span class="sc">|&gt;</span> </span>
+<span id="cb18-19"><a href="#cb18-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">unnest_longer</span>(books) <span class="sc">|&gt;</span> </span>
+<span id="cb18-20"><a href="#cb18-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(books <span class="sc">!=</span> <span class="st">""</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb18-21"><a href="#cb18-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">book =</span> books)</span>
+<span id="cb18-22"><a href="#cb18-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-23"><a href="#cb18-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-24"><a href="#cb18-24" aria-hidden="true" tabindex="-1"></a>tv_series <span class="ot">&lt;-</span> chars <span class="sc">|&gt;</span> </span>
+<span id="cb18-25"><a href="#cb18-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">unnest_wider</span>(json) <span class="sc">|&gt;</span> </span>
+<span id="cb18-26"><a href="#cb18-26" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(id, tvSeries) <span class="sc">|&gt;</span> </span>
+<span id="cb18-27"><a href="#cb18-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">unnest_longer</span>(tvSeries) <span class="sc">|&gt;</span> </span>
+<span id="cb18-28"><a href="#cb18-28" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(tvSeries <span class="sc">!=</span> <span class="st">""</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb18-29"><a href="#cb18-29" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">tv_show =</span> tvSeries)</span>
+<span id="cb18-30"><a href="#cb18-30" aria-hidden="true" tabindex="-1"></a>tv_series</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 93 × 2
+      id tv_show 
+   &lt;int&gt; &lt;chr&gt;   
+ 1  1022 Season 1
+ 2  1022 Season 2
+ 3  1022 Season 3
+ 4  1022 Season 4
+ 5  1022 Season 5
+ 6  1022 Season 6
+ 7  1052 Season 1
+ 8  1052 Season 2
+ 9  1052 Season 3
+10  1052 Season 4
+# ℹ 83 more rows</code></pre>
+</div>
+</div>
+</section>
+<section id="webscraping-open-secrets" class="level1">
+<h1>Webscraping Open Secrets</h1>
+<p>In this assignment we will scrape and work with data foreign connected PACs that donate to US political campaigns. In the United States, only American citizens and green card holders can contribute to federal elections, but the American divisions of foreign companies can form political action committees (PACs) and collect contributions from their American employees.</p>
+<p>First, we will get data foreign connected PAC contributions in the 2022 election cycle. Then, you will use a similar approach to get data such contributions from previous years so that we can examine trends over time.</p>
+<p>In order to complete this assignment you will need a Chrome browser with the <a href="http://selectorgadget.com/">Selector Gadget extension</a> installed.</p>
+<p>In addition to <code>tidyverse</code>, you will need to install and load the packages <code>robotstxt</code> and <code>rvest</code></p>
+<p><strong>Problem 2:</strong></p>
+<ul>
+<li>Check that open secrets allows you to webscrape by running the <code>paths_allowed</code> function on the url <code>https://www.opensecrets.org</code>.</li>
+</ul>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>open_stuff_reference <span class="ot">=</span> <span class="st">"https://www.opensecrets.org"</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="fu">paths_allowed</span>(open_stuff_reference)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>
+ www.opensecrets.org                      </code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] TRUE</code></pre>
+</div>
+</div>
+<ul>
+<li>Write a function called <code>scrape_pac()</code> that scrapes information from the Open Secrets webpage for foreign connected PAC contributions in a given year. The <code>url</code> for this data is <a href="https://www.opensecrets.org/political-action-committees-pacs/foreign-connected-pacs/2024" class="uri">https://www.opensecrets.org/political-action-committees-pacs/foreign-connected-pacs/2024</a>. This function should take the url of the webpage as its only input and should output a data frame. The variables of this data-frame should be renamed so that they are in <code>snake_case</code> format (<code>lower_case_and_underscores_for_spaces</code>, see R4DS section 2.3). Use <code>str_squish()</code> to remove excess whitespace from the Country of Origin/Parent Company variables, and add a new column which records the year by extracting from the input url.</li>
+</ul>
+<p>Hint: If you have trouble finding the right elements to search for using the selector gadget try looking for a table element.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>scrape_pac  <span class="ot">=</span>  <span class="cf">function</span>(url) {</span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">message</span>(<span class="st">"Scraping URL: "</span>, url)</span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>  page <span class="ot">&lt;-</span> <span class="fu">read_html</span>(url)</span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a>  table_stuff <span class="ot">=</span>  page <span class="sc">%&gt;%</span> <span class="fu">html_element</span>(<span class="st">"table"</span>)</span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">is.null</span>(table_stuff)) {</span>
+<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">warning</span>(<span class="st">"No table found on the page."</span>)</span>
+<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span>(<span class="cn">NULL</span>)</span>
+<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb24-10"><a href="#cb24-10" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb24-11"><a href="#cb24-11" aria-hidden="true" tabindex="-1"></a>  pac_table <span class="ot">&lt;-</span> table_stuff <span class="sc">%&gt;%</span></span>
+<span id="cb24-12"><a href="#cb24-12" aria-hidden="true" tabindex="-1"></a>    <span class="fu">html_table</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb24-13"><a href="#cb24-13" aria-hidden="true" tabindex="-1"></a>    <span class="fu">rename_with</span>(<span class="sc">~</span> <span class="fu">str_replace_all</span>(., <span class="st">" "</span>, <span class="st">"_"</span>) <span class="sc">%&gt;%</span> <span class="fu">str_to_lower</span>(), <span class="fu">everything</span>()) <span class="sc">%&gt;%</span></span>
+<span id="cb24-14"><a href="#cb24-14" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(</span>
+<span id="cb24-15"><a href="#cb24-15" aria-hidden="true" tabindex="-1"></a>      <span class="at">country_of_origin_parent_company =</span> <span class="fu">str_squish</span>(<span class="st">`</span><span class="at">country_of_origin/parent_company</span><span class="st">`</span>),</span>
+<span id="cb24-16"><a href="#cb24-16" aria-hidden="true" tabindex="-1"></a>      <span class="at">year =</span> <span class="fu">str_extract</span>(url, <span class="st">"</span><span class="sc">\\</span><span class="st">d{4}"</span>)</span>
+<span id="cb24-17"><a href="#cb24-17" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb24-18"><a href="#cb24-18" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb24-19"><a href="#cb24-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(pac_table)</span>
+<span id="cb24-20"><a href="#cb24-20" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<ul>
+<li>Test your function on the urls for 2024, 2022, and 2000, and show the first several rows of each of the outpus. Does the function seem to do what you expected it to do?</li>
+</ul>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>urls <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>  <span class="st">"https://www.opensecrets.org/political-action-committees-pacs/foreign-connected-pacs/2024"</span>,</span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>  <span class="st">"https://www.opensecrets.org/political-action-committees-pacs/foreign-connected-pacs/2022"</span>,</span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>  <span class="st">"https://www.opensecrets.org/political-action-committees-pacs/foreign-connected-pacs/2000"</span></span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a>pac_years <span class="ot">&lt;-</span> <span class="fu">lapply</span>(urls, scrape_pac)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Scraping URL: https://www.opensecrets.org/political-action-committees-pacs/foreign-connected-pacs/2024</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Scraping URL: https://www.opensecrets.org/political-action-committees-pacs/foreign-connected-pacs/2022</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Scraping URL: https://www.opensecrets.org/political-action-committees-pacs/foreign-connected-pacs/2000</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(pac_years) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"2024"</span>, <span class="st">"2022"</span>, <span class="st">"2000"</span>)</span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a><span class="fu">lapply</span>(pac_years, head)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>$`2024`
+# A tibble: 6 × 7
+  `pac_name_(affiliate)`               country_of_origin/pa…¹ total dems  repubs
+  &lt;chr&gt;                                &lt;chr&gt;                  &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; 
+1 Accenture (Accenture)                Ireland/Accenture plc  $38,… $18,… $20,5…
+2 Acreage Holdings                     Canada/Acreage Holdin… $0    $0    $0    
+3 Air Liquide America                  France/L'Air Liquide … $21,… $3,5… $17,5…
+4 Airbus Group                         Netherlands/Airbus Gr… $268… $78,… $189,…
+5 Alexion Pharmaceuticals (AstraZenec… UK/AstraZeneca PLC     $113… $59,… $54,0…
+6 Alkermes Inc                         Ireland/Alkermes Plc   $73,… $37,… $36,0…
+# ℹ abbreviated name: ¹​`country_of_origin/parent_company`
+# ℹ 2 more variables: country_of_origin_parent_company &lt;chr&gt;, year &lt;chr&gt;
+
+$`2022`
+# A tibble: 6 × 7
+  `pac_name_(affiliate)`               country_of_origin/pa…¹ total dems  repubs
+  &lt;chr&gt;                                &lt;chr&gt;                  &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; 
+1 Accenture (Accenture)                Ireland/Accenture plc  $3,0… $0    $3,000
+2 Acreage Holdings                     Canada/Acreage Holdin… $0    $0    $0    
+3 Air Liquide America                  France/L'Air Liquide … $17,… $14,… $2,500
+4 Airbus Group                         Netherlands/Airbus Gr… $193… $82,… $111,…
+5 Alexion Pharmaceuticals (AstraZenec… UK/AstraZeneca PLC     $186… $104… $82,2…
+6 Alkermes Inc                         Ireland/Alkermes Plc   $84,… $34,… $50,0…
+# ℹ abbreviated name: ¹​`country_of_origin/parent_company`
+# ℹ 2 more variables: country_of_origin_parent_company &lt;chr&gt;, year &lt;chr&gt;
+
+$`2000`
+# A tibble: 6 × 7
+  `pac_name_(affiliate)`    country_of_origin/parent_compan…¹ total dems  repubs
+  &lt;chr&gt;                     &lt;chr&gt;                             &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; 
+1 7-Eleven                  Japan/Ito-Yokado                  $8,5… $1,5… $7,000
+2 ABB Group                 Switzerland/Asea Brown Boveri     $46,… $17,… $28,5…
+3 Accenture                 UK/Accenture plc                  $75,… $23,… $52,9…
+4 ACE INA                   UK/ACE Group                      $38,… $12,… $26,0…
+5 Acuson Corp (Siemens AG)  Germany/Siemens AG                $2,0… $2,0… $0    
+6 Adtranz (DaimlerChrysler) Germany/DaimlerChrysler AG        $10,… $10,… $500  
+# ℹ abbreviated name: ¹​`country_of_origin/parent_company`
+# ℹ 2 more variables: country_of_origin_parent_company &lt;chr&gt;, year &lt;chr&gt;</code></pre>
+</div>
+</div>
+<p><strong>Problem 3:</strong></p>
+<ul>
+<li>Construct a vector called <code>urls</code> that contains the URLs for each webpage that contains information on foreign-connected PAC contributions for a given year (combine <code>seq</code> and string functions). Using the <code>map_dfr</code> function from the <code>purrr</code> package, apply the <code>scrape_pac()</code> function over <code>urls</code> in a way that will result in a data frame called <code>pac_all</code> that contains the data for all of the years.</li>
+</ul>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>years <span class="ot">=</span>  <span class="fu">seq</span>(<span class="dv">2000</span>, <span class="dv">2024</span>, <span class="at">by =</span> <span class="dv">2</span>)</span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>urls <span class="ot">=</span>  <span class="fu">glue</span>(<span class="st">"https://www.opensecrets.org/political-action-committees-pacs/foreign-connected-pacs/{years}"</span>)</span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>pac_all <span class="ot">=</span> <span class="fu">map_dfr</span>(urls, scrape_pac)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Scraping URL: https://www.opensecrets.org/political-action-committees-pacs/foreign-connected-pacs/2000</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Scraping URL: https://www.opensecrets.org/political-action-committees-pacs/foreign-connected-pacs/2002</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Scraping URL: https://www.opensecrets.org/political-action-committees-pacs/foreign-connected-pacs/2004</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Scraping URL: https://www.opensecrets.org/political-action-committees-pacs/foreign-connected-pacs/2006</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Scraping URL: https://www.opensecrets.org/political-action-committees-pacs/foreign-connected-pacs/2008</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Scraping URL: https://www.opensecrets.org/political-action-committees-pacs/foreign-connected-pacs/2010</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Scraping URL: https://www.opensecrets.org/political-action-committees-pacs/foreign-connected-pacs/2012</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Scraping URL: https://www.opensecrets.org/political-action-committees-pacs/foreign-connected-pacs/2014</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Scraping URL: https://www.opensecrets.org/political-action-committees-pacs/foreign-connected-pacs/2016</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Scraping URL: https://www.opensecrets.org/political-action-committees-pacs/foreign-connected-pacs/2018</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Scraping URL: https://www.opensecrets.org/political-action-committees-pacs/foreign-connected-pacs/2020</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Scraping URL: https://www.opensecrets.org/political-action-committees-pacs/foreign-connected-pacs/2022</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Scraping URL: https://www.opensecrets.org/political-action-committees-pacs/foreign-connected-pacs/2024</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb45"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a><span class="fu">view</span>(pac_all)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<ul>
+<li>Clean this combined dataset by separating the country of origin from the parent company (use <code>separate_wider_delim</code> or another tool of your choice, you will need to be cautious with some special cases in this column) and by converting the strings in the <code>total</code>, <code>dems</code>, and <code>repubs</code> columns into numbers. Print out the top 10 rows over your dataset after completing these steps.</li>
+</ul>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb46"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a>cleaned_pac_all  <span class="ot">=</span>  pac_all <span class="sc">%&gt;%</span></span>
+<span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">separate_wider_delim</span>(</span>
+<span id="cb46-3"><a href="#cb46-3" aria-hidden="true" tabindex="-1"></a>    country_of_origin_parent_company, </span>
+<span id="cb46-4"><a href="#cb46-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">delim =</span> <span class="st">"/"</span>, </span>
+<span id="cb46-5"><a href="#cb46-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">names =</span> <span class="fu">c</span>(<span class="st">"country_of_origin"</span>, <span class="st">"parent_company"</span>), </span>
+<span id="cb46-6"><a href="#cb46-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">too_many =</span> <span class="st">"merge"</span>  </span>
+<span id="cb46-7"><a href="#cb46-7" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb46-8"><a href="#cb46-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb46-9"><a href="#cb46-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">total =</span> <span class="fu">parse_number</span>(total),</span>
+<span id="cb46-10"><a href="#cb46-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">dems =</span> <span class="fu">parse_number</span>(dems),</span>
+<span id="cb46-11"><a href="#cb46-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">repubs =</span> <span class="fu">parse_number</span>(repubs)</span>
+<span id="cb46-12"><a href="#cb46-12" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: There were 3 warnings in `mutate()`.
+The first warning was:
+ℹ In argument: `total = parse_number(total)`.
+Caused by warning:
+! 13 parsing failures.
+row col expected  actual
+ 39  -- a number -$3,000
+230  -- a number -$4,000
+430  -- a number -$9,050
+763  -- a number -$2,000
+946  -- a number -$2,500
+... ... ........ .......
+See problems(...) for more details.
+ℹ Run `dplyr::last_dplyr_warnings()` to see the 2 remaining warnings.</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb48"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(cleaned_pac_all, <span class="dv">10</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 10 × 8
+   `pac_name_(affiliate)`              country_of_origin/pa…¹ total  dems repubs
+   &lt;chr&gt;                               &lt;chr&gt;                  &lt;dbl&gt; &lt;dbl&gt;  &lt;dbl&gt;
+ 1 7-Eleven                            Japan/Ito-Yokado        8500  1500   7000
+ 2 ABB Group                           Switzerland/Asea Brow… 46000 17000  28500
+ 3 Accenture                           UK/Accenture plc       75984 23000  52984
+ 4 ACE INA                             UK/ACE Group           38500 12500  26000
+ 5 Acuson Corp (Siemens AG)            Germany/Siemens AG      2000  2000      0
+ 6 Adtranz (DaimlerChrysler)           Germany/DaimlerChrysl… 10500 10000    500
+ 7 AE Staley Manufacturing (Tate &amp; Ly… UK/Tate &amp; Lyle         24000 10000  14000
+ 8 AEGON USA (AEGON NV)                Netherlands/Aegon NV   58250 10500  47750
+ 9 AIM Management Group                UK/AMVESCAP            25000 10000  15000
+10 Air Liquide America                 France/L'Air Liquide …     0     0      0
+# ℹ abbreviated name: ¹​`country_of_origin/parent_company`
+# ℹ 3 more variables: country_of_origin &lt;chr&gt;, parent_company &lt;chr&gt;, year &lt;chr&gt;</code></pre>
+</div>
+</div>
+<ul>
+<li>Calculate the total contributions from PACs linked to Canada and Mexico each year and plot how these contributions change over time.</li>
+</ul>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb50"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a>can_mex_data <span class="ot">&lt;-</span> cleaned_pac_all <span class="sc">%&gt;%</span></span>
+<span id="cb50-2"><a href="#cb50-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(country_of_origin <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Canada"</span>, <span class="st">"Mexico"</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb50-3"><a href="#cb50-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(year, country_of_origin) <span class="sc">%&gt;%</span></span>
+<span id="cb50-4"><a href="#cb50-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="at">total_contributions =</span> <span class="fu">sum</span>(total, <span class="at">na.rm =</span> <span class="cn">TRUE</span>), <span class="at">.groups =</span> <span class="st">"drop"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb51"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(can_mex_data, <span class="fu">aes</span>(<span class="at">x =</span> year, <span class="at">y =</span> total_contributions, <span class="at">color =</span> country_of_origin)) <span class="sc">+</span></span>
+<span id="cb51-2"><a href="#cb51-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="at">size =</span> <span class="dv">1</span>) <span class="sc">+</span> <span class="fu">geom_point</span>(<span class="at">size =</span> <span class="dv">2</span>) <span class="sc">+</span></span>
+<span id="cb51-3"><a href="#cb51-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
+<span id="cb51-4"><a href="#cb51-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"PAC Contributions Linked to Canada and Mexico Over Time"</span>,</span>
+<span id="cb51-5"><a href="#cb51-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> <span class="st">"Year"</span>,</span>
+<span id="cb51-6"><a href="#cb51-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">y =</span> <span class="st">"Total Contributions (USD)"</span>,</span>
+<span id="cb51-7"><a href="#cb51-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">color =</span> <span class="st">"Country of Origin"</span></span>
+<span id="cb51-8"><a href="#cb51-8" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb51-9"><a href="#cb51-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_light</span>() <span class="sc">+</span></span>
+<span id="cb51-10"><a href="#cb51-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_continuous</span>(<span class="at">labels =</span> scales<span class="sc">::</span><span class="fu">dollar_format</span>())</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: Using `size` aesthetic for lines was deprecated in ggplot2 3.4.0.
+ℹ Please use `linewidth` instead.</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>`geom_line()`: Each group consists of only one observation.
+ℹ Do you need to adjust the group aesthetic?</code></pre>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="607HW7_files/figure-html/unnamed-chunk-14-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<ul>
+<li>Find the 5 countries who over the entire time period of the dataset have the greatest total contribution from affiliated PACs. Then calculate the total contribution for each of those countries for each year of the data and make a plot of it to visualize how the contributions have changed over time.</li>
+</ul>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb54"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb54-1"><a href="#cb54-1" aria-hidden="true" tabindex="-1"></a>top_five_countries <span class="ot">&lt;-</span> cleaned_pac_all <span class="sc">%&gt;%</span></span>
+<span id="cb54-2"><a href="#cb54-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(country_of_origin) <span class="sc">%&gt;%</span></span>
+<span id="cb54-3"><a href="#cb54-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="at">total_contributions =</span> <span class="fu">sum</span>(total, <span class="at">na.rm =</span> <span class="cn">TRUE</span>), <span class="at">.groups =</span> <span class="st">"drop"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb54-4"><a href="#cb54-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="fu">desc</span>(total_contributions)) <span class="sc">%&gt;%</span></span>
+<span id="cb54-5"><a href="#cb54-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">slice_head</span>(<span class="at">n =</span> <span class="dv">5</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb55"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb55-1"><a href="#cb55-1" aria-hidden="true" tabindex="-1"></a>top_countries_data <span class="ot">&lt;-</span> cleaned_pac_all <span class="sc">%&gt;%</span></span>
+<span id="cb55-2"><a href="#cb55-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(country_of_origin <span class="sc">%in%</span> top_five_countries<span class="sc">$</span>country_of_origin)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb56"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb56-1"><a href="#cb56-1" aria-hidden="true" tabindex="-1"></a>top_countries_data <span class="ot">&lt;-</span> cleaned_pac_all <span class="sc">%&gt;%</span></span>
+<span id="cb56-2"><a href="#cb56-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(country_of_origin <span class="sc">%in%</span> top_five_countries<span class="sc">$</span>country_of_origin)</span>
+<span id="cb56-3"><a href="#cb56-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb56-4"><a href="#cb56-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb56-5"><a href="#cb56-5" aria-hidden="true" tabindex="-1"></a>top_countries_yearly <span class="ot">&lt;-</span> top_countries_data <span class="sc">%&gt;%</span></span>
+<span id="cb56-6"><a href="#cb56-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(year, country_of_origin) <span class="sc">%&gt;%</span></span>
+<span id="cb56-7"><a href="#cb56-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="at">total_contributions =</span> <span class="fu">sum</span>(total, <span class="at">na.rm =</span> <span class="cn">TRUE</span>), <span class="at">.groups =</span> <span class="st">"drop"</span>)</span>
+<span id="cb56-8"><a href="#cb56-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb56-9"><a href="#cb56-9" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(top_countries_yearly, <span class="fu">aes</span>(<span class="at">x =</span> year, <span class="at">y =</span> total_contributions, <span class="at">color =</span> country_of_origin)) <span class="sc">+</span></span>
+<span id="cb56-10"><a href="#cb56-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="at">size =</span> <span class="dv">1</span>) <span class="sc">+</span></span>
+<span id="cb56-11"><a href="#cb56-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">size =</span> <span class="dv">2</span>) <span class="sc">+</span></span>
+<span id="cb56-12"><a href="#cb56-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
+<span id="cb56-13"><a href="#cb56-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"Top 5 Countries by PAC Contributions Over Time"</span>,</span>
+<span id="cb56-14"><a href="#cb56-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> <span class="st">"Year"</span>,</span>
+<span id="cb56-15"><a href="#cb56-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">y =</span> <span class="st">"Total Contributions (USD)"</span>,</span>
+<span id="cb56-16"><a href="#cb56-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">color =</span> <span class="st">"Country of Origin"</span></span>
+<span id="cb56-17"><a href="#cb56-17" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb56-18"><a href="#cb56-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>() <span class="sc">+</span></span>
+<span id="cb56-19"><a href="#cb56-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_continuous</span>(<span class="at">labels =</span> scales<span class="sc">::</span><span class="fu">dollar_format</span>())</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>`geom_line()`: Each group consists of only one observation.
+ℹ Do you need to adjust the group aesthetic?</code></pre>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="607HW7_files/figure-html/unnamed-chunk-17-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const onCopySuccess = function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  }
+  const getTextToCopy = function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+    text: getTextToCopy
+  });
+  clipboard.on('success', onCopySuccess);
+  if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+    // For code content inside modals, clipBoardJS needs to be initialized with a container option
+    // TODO: Check when it could be a function (https://github.com/zenorocha/clipboard.js/issues/860)
+    const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+      text: getTextToCopy,
+      container: window.document.getElementById('quarto-embedded-source-code-modal')
+    });
+    clipboardModal.on('success', onCopySuccess);
+  }
+    var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+    var mailtoRegex = new RegExp(/^mailto:/);
+      var filterRegex = new RegExp('/' + window.location.host + '/');
+    var isInternal = (href) => {
+        return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+    }
+    // Inspect non-navigation links and adorn them if external
+ 	var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+    for (var i=0; i<links.length; i++) {
+      const link = links[i];
+      if (!isInternal(link.href)) {
+        // undo the damage that might have been done by quarto-nav.js in the case of
+        // links that we want to consider external
+        if (link.dataset.originalHref !== undefined) {
+          link.href = link.dataset.originalHref;
+        }
+      }
+    }
+  function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+    const config = {
+      allowHTML: true,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start',
+    };
+    if (contentFn) {
+      config.content = contentFn;
+    }
+    if (onTriggerFn) {
+      config.onTrigger = onTriggerFn;
+    }
+    if (onUntriggerFn) {
+      config.onUntrigger = onUntriggerFn;
+    }
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      if (note) {
+        return note.innerHTML;
+      } else {
+        return "";
+      }
+    });
+  }
+  const xrefs = window.document.querySelectorAll('a.quarto-xref');
+  const processXRef = (id, note) => {
+    // Strip column container classes
+    const stripColumnClz = (el) => {
+      el.classList.remove("page-full", "page-columns");
+      if (el.children) {
+        for (const child of el.children) {
+          stripColumnClz(child);
+        }
+      }
+    }
+    stripColumnClz(note)
+    if (id === null || id.startsWith('sec-')) {
+      // Special case sections, only their first couple elements
+      const container = document.createElement("div");
+      if (note.children && note.children.length > 2) {
+        container.appendChild(note.children[0].cloneNode(true));
+        for (let i = 1; i < note.children.length; i++) {
+          const child = note.children[i];
+          if (child.tagName === "P" && child.innerText === "") {
+            continue;
+          } else {
+            container.appendChild(child.cloneNode(true));
+            break;
+          }
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(container);
+        }
+        return container.innerHTML
+      } else {
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        return note.innerHTML;
+      }
+    } else {
+      // Remove any anchor links if they are present
+      const anchorLink = note.querySelector('a.anchorjs-link');
+      if (anchorLink) {
+        anchorLink.remove();
+      }
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(note);
+      }
+      // TODO in 1.5, we should make sure this works without a callout special case
+      if (note.classList.contains("callout")) {
+        return note.outerHTML;
+      } else {
+        return note.innerHTML;
+      }
+    }
+  }
+  for (var i=0; i<xrefs.length; i++) {
+    const xref = xrefs[i];
+    tippyHover(xref, undefined, function(instance) {
+      instance.disable();
+      let url = xref.getAttribute('href');
+      let hash = undefined; 
+      if (url.startsWith('#')) {
+        hash = url;
+      } else {
+        try { hash = new URL(url).hash; } catch {}
+      }
+      if (hash) {
+        const id = hash.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note !== null) {
+          try {
+            const html = processXRef(id, note.cloneNode(true));
+            instance.setContent(html);
+          } finally {
+            instance.enable();
+            instance.show();
+          }
+        } else {
+          // See if we can fetch this
+          fetch(url.split('#')[0])
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.getElementById(id);
+            if (note !== null) {
+              const html = processXRef(id, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      } else {
+        // See if we can fetch a full url (with no hash to target)
+        // This is a special case and we should probably do some content thinning / targeting
+        fetch(url)
+        .then(res => res.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const htmlDoc = parser.parseFromString(html, "text/html");
+          const note = htmlDoc.querySelector('main.content');
+          if (note !== null) {
+            // This should only happen for chapter cross references
+            // (since there is no id in the URL)
+            // remove the first header
+            if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+              note.children[0].remove();
+            }
+            const html = processXRef(null, note);
+            instance.setContent(html);
+          } 
+        }).finally(() => {
+          instance.enable();
+          instance.show();
+        });
+      }
+    }, function(instance) {
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            div.style.left = 0;
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+        // Handle positioning of the toggle
+    window.addEventListener(
+      "resize",
+      throttle(() => {
+        elRect = undefined;
+        if (selectedAnnoteEl) {
+          selectCodeLines(selectedAnnoteEl);
+        }
+      }, 10)
+    );
+    function throttle(fn, ms) {
+    let throttle = false;
+    let timer;
+      return (...args) => {
+        if(!throttle) { // first call gets through
+            fn.apply(this, args);
+            throttle = true;
+        } else { // all the others get throttled
+            if(timer) clearTimeout(timer); // cancel #2
+            timer = setTimeout(() => {
+              fn.apply(this, args);
+              timer = throttle = false;
+            }, ms);
+        }
+      };
+    }
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>
